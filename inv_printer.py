@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import *
 from PyQt5 import uic
 from reportlab.lib import colors
 from reportlab.lib.units import inch
-from reportlab.platypus import BaseDocTemplate, Table, TableStyle, Paragraph, Frame, PageTemplate
+from reportlab.platypus import BaseDocTemplate, Table, TableStyle, Paragraph, Frame, PageTemplate, PageBreak, SimpleDocTemplate
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
@@ -49,7 +49,7 @@ class VanInvoice(QWidget):
     def getData(self):
         try:
             start_time = time.time()
-            global values
+            global table, headers,result,right
             conn = sqlite3.connect(':memory:')
             cur = conn.cursor()
 
@@ -60,10 +60,12 @@ class VanInvoice(QWidget):
             df1.to_sql(name='PR_DETL', con=conn, if_exists='append')
 
             #get headers
-            cur.execute("SELECT OIDATE,OSLSMAN,ADDEDBY,OINO,OQNO FROM PR_HEAD WHERE PR_STATUS is null",)
+            cur.execute("SELECT OIDATE,OINO,OSLSMAN,ADDEDBY,OQNO FROM PR_HEAD WHERE PR_STATUS is null",)
             result = cur.fetchall()
-            headers = [[x for x in g] for x, g in groupby(result, key = lambda x: x[3])]
-            print(headers)
+            #headers = [[x for x in g] for x, g in groupby(result, key = lambda x: x[3])]
+            #print(headers)
+            cur.execute("SELECT OINO,OQNO FROM PR_HEAD WHERE PR_STATUS is null",)
+            right = cur.fetchall()
             
             #get inv details
             cur.execute("SELECT OD_ITEM, "
@@ -84,8 +86,12 @@ class VanInvoice(QWidget):
                         "WHERE PR_HEAD.PR_STATUS is null")
             table = cur.fetchall()
             #values = [[k,[x[1:] for x in g]] for x, g in groupby(table, key = lambda x: x[5])]
-            values = [[x for x in g] for x, g in groupby(table, key = lambda x: x[5])]
-            print(values)
+            #values = [[x for x in g] for x, g in groupby(table, key = lambda x: x[5])]
+            #dflist = pd.DataFrame(table, columns =["Code", "Qty", "Description", "Unit Price", "Amount", "Invoice"])
+            #dflist['match'] = dflist.Invoice.eq(dflist.Invoice.shift()) 
+            #sep = dict(list(dataframe.groupby("Invoice")))
+            #print(values)
+            #print(sep[358826])
 
             self.tableWidget.setRowCount(0)
             for row_number, row_data in enumerate(table):
@@ -135,9 +141,46 @@ class VanInvoice(QWidget):
                     alignment=1,
                 )
 
-                def header(canvas, pdf):
-                    for x in values:
+                tablestyle1 = TableStyle([
+                    ('FONTSIZE', (0, 0), (-1, -1), 10),
+                    ('FONTNAME', (0, 0), (-1, -1), 'ArialBd'),
+                    #('BOX', (0, 0), (-1, -1), 0.5, colors.black),
 
+                 ])
+
+                tablestyle2 = TableStyle([
+
+                     ('FONTSIZE', (0, 0), (-1, -1), 10),
+                     ('FONTNAME', (0, 0), (-1, -1), 'ArialBd'),
+                     ('BOX', (0, 0), (-1, -1), 0.5, colors.black),
+                     ('LINEBEFORE', (1, 0), (1, -1), 0.5, colors.black)
+
+                 ])
+
+                headerstyle = TableStyle([
+
+                     ('FONTSIZE', (0, 0), (-1, 0), 9),
+                     ('FONTNAME', (0, 0), (-1, 0), 'ArialBd'),
+                     ('LINEABOVE', (0, 0), (-1, -1), 1, colors.black),
+                     ('LINEBEFORE', (0, 0), (0, -1), 1, colors.black),
+                     ('LINEAFTER', (4, 0), (4, -1), 1, colors.black),
+                     ])
+
+                footerstyle = TableStyle([
+
+                     ('FONTSIZE', (0, 0), (-1, -1), 8),
+                     ('FONTSIZE', (1, 0), (2, -1), 9),
+                     ('FONTNAME', (0, 0), (-1, -1), 'ArialBd'),
+                     ('LINEBEFORE', (0, 0), (0, 4), 1, colors.black),
+                     ('LINEBEFORE', (2, 0), (-1, -1), 1, colors.black),
+                     ('LINEAFTER', (2, 0), (-1, -1), 1, colors.black),
+                     ('LINEABOVE', (0, 5), (-1, 5), 1, colors.black),
+                     ('LINEBELOW', (2, 5), (-1, 5), 1, colors.black),
+                     ('ALIGN', (2, 0), (2, -1), "RIGHT"),
+                      ])
+
+                def header(canvas, pdf):
+                   
                         # Draw heading
                         heading = Paragraph("VANCOUVER GLASS (1990) LTD.", style2)
                         heading.wrap(pdf.width, inch * 0.3)
@@ -154,11 +197,21 @@ class VanInvoice(QWidget):
                         canvas.line(6.41 * inch, 2.5 * inch, 6.41 * inch, 7.6 * inch)
                         canvas.line(7.19 * inch, 2.5 * inch, 7.19 * inch, 7.6 * inch)
 
-                        tablelist1 = [["Date: ", "Invoice#: "],
-                                  ["Salesman: "],
+                        tablelist1 = [["Date:","Invoice#: "],
+                                  ["Salesman:"],
                                   ["GST#: 121989834RT","Quote#: "],
-                                  ["","Page: "+"%d " % doc.page]
-                                  ]
+                                  ["Added-by:","Page: "+"%d " % doc.page]
+                                  ] 
+                        """
+                        tabledetails = [] 
+                        for row in range(len(values)):
+                            for col in range(len(values[0])):
+                                table_item = values[row][col]              
+                                tabledetails.append('' if table_item is None else str(table_item))
+
+                        print(tabledetails)"""
+                        
+                 
                         tablelist2 = [["Sold To:", "Location: "],
                                   ["", "Ship To:"],
                                   ["", ""],
@@ -177,52 +230,11 @@ class VanInvoice(QWidget):
                                  [""],
                                  ["Charge to Acount", "Total Amount:", ""]]
 
-
-
-                        tablestyle1 = TableStyle([
-
-                        ('FONTSIZE', (0, 0), (-1, -1), 10),
-                        ('FONTNAME', (0, 0), (-1, -1), 'ArialBd'),
-
-                        ])
-
-                        tablestyle2 = TableStyle([
-
-                        ('FONTSIZE', (0, 0), (-1, -1), 10),
-                        ('FONTNAME', (0, 0), (-1, -1), 'ArialBd'),
-                        ('BOX', (0, 0), (-1, -1), 0.5, colors.black),
-                        ('LINEBEFORE', (1, 0), (1, -1), 0.5, colors.black)
-
-                        ])
-
-                        headerstyle = TableStyle([
-
-                        ('FONTSIZE', (0, 0), (-1, 0), 9),
-                        ('FONTNAME', (0, 0), (-1, 0), 'ArialBd'),
-                        ('LINEABOVE', (0, 0), (-1, -1), 1, colors.black),
-                        ('LINEBEFORE', (0, 0), (0, -1), 1, colors.black),
-                        ('LINEAFTER', (4, 0), (4, -1), 1, colors.black),
-
-                        ])
-
-                        footerstyle = TableStyle([
-
-                        ('FONTSIZE', (0, 0), (-1, -1), 8),
-                        ('FONTSIZE', (1, 0), (2, -1), 9),
-                        ('FONTNAME', (0, 0), (-1, -1), 'ArialBd'),
-                        ('LINEBEFORE', (0, 0), (0, 4), 1, colors.black),
-                        ('LINEBEFORE', (2, 0), (-1, -1), 1, colors.black),
-                        ('LINEAFTER', (2, 0), (-1, -1), 1, colors.black),
-                        ('LINEABOVE', (0, 5), (-1, 5), 1, colors.black),
-                        ('LINEBELOW', (2, 5), (-1, 5), 1, colors.black),
-                        ('ALIGN', (2, 0), (2, -1), "RIGHT"),
-                        ])
-
-                        table1 = Table(tablelist1, colWidths=[400, 200], rowHeights=[10, 10, 10, 10],
+                        table1 = Table(tablelist1, colWidths=[400,200], rowHeights=[10, 10, 10, 10],
                                    hAlign='CENTER', spaceBefore=5, style=tablestyle1)
                         table1.wrap(pdf.width, inch)
-                        table1.drawOn(canvas, pdf.leftMargin, pdf.height - inch * 0.4)
-
+                        table1.drawOn(canvas, pdf.leftMargin, pdf.height - inch * 0.4)  
+                        
                         table2 = Table(tablelist2, colWidths=[268, 268], rowHeights=[20, 15, 10, 10, 10, 10, 10, 20],
                                    hAlign='CENTER', spaceBefore=5, style=tablestyle2)
                         table2.wrap(pdf.width, inch)
@@ -232,7 +244,6 @@ class VanInvoice(QWidget):
                                      colWidths=[86, 43, 301, 54, 53])
                         header.wrap(pdf.width, inch)
                         header.drawOn(canvas, pdf.leftMargin, pdf.height - inch * 2.35)
-
                         footertable = Table(footerlist, colWidths=[410, 71, 56], rowHeights=[20, 10, 10, 10, 10, 20],
                                         hAlign='LEFT', spaceBefore=5, style=footerstyle)
                         footertable.wrap(pdf.width, inch)
@@ -242,10 +253,10 @@ class VanInvoice(QWidget):
                         addressnote = Paragraph("1706 E. HASTINGS, VAN, B.C. V5L 1S9 Phone (604)253-7707 Fax (604)253-8448",addstyle)
                         addressnote.wrap(pdf.width, inch)
                         addressnote.drawOn(canvas, pdf.leftMargin, 0.7 * inch)
-                        canvas.showPage()
+                        
 
                 doc = BaseDocTemplate(filename, leftMargin=0.5 * inch, rightMargin=0.5 * inch)
-
+                
                 frame = Frame(
 
                     0.5 * inch,  # x
@@ -254,53 +265,36 @@ class VanInvoice(QWidget):
                     4.83 * inch,  # height
                     showBoundary=1
                 )
+                
+                #template = PageTemplate(id='all_pages', frames=frame, onPage=header)
 
-                template = PageTemplate(id='all_pages', frames=frame, onPage=header)
+                template = PageTemplate(id='all_pages',frames=frame,onPage=header)
                 doc.addPageTemplates([template])
 
-
-                #tableheader = [["Code", "Qty", "Description", "Unit Price", "Amount"]]
-
-                tablelist3 = []
-                
-                """ for row in range(self.tableWidget.rowCount()):
-                    df_list2 = []
-                    for col in range(self.tableWidget.columnCount()-1):
-                        table_item = self.tableWidget.item(row, col)
-                        df_list2.append('' if table_item is None else str(table_item.text()))
-                    tablelist3.append(df_list2)
-                """
-
                 tablestyle3 = TableStyle([
-
-
                     ('FONTSIZE', (0, 0), (-1, -1), 8),
                     ('FONTNAME', (0, 1), (-1, -1), 'Arial'),
-
                     ('ALIGN',(1,0),(1,-1), "RIGHT"),
-                    ('ALIGN', (3, 0), (4, -1), "RIGHT"),
-
-
+                    ('ALIGN', (3, 0), (5, -1), "RIGHT"),
+                ])
+                table_style = TableStyle([
+                    #('BACKGROUND', (1,1), (-2,-2), colors.green),
+                    #('TEXTCOLOR', (0,0), (1,-1), colors.red),
+                    ('BOX', (0,0), (-1,-1), 0.45, colors.black),
+                    ('INNERGRID', (0, 0), (-1, -1), 0.25, colors.blue),
                 ])
 
-                tableheaderstyle = TableStyle([
-
-                    ('FONTSIZE', (0, 0), (-1, 0), 9),
-                    ('FONTNAME', (0, 0), (-1, 0), 'ArialBd'),
-                    ('LINEBELOW', (0, 0), (-1, 0), 0.5, colors.black),
-
-
-                ])
-
-
-                table3 = Table(tablelist3,
-                               hAlign='LEFT', spaceBefore=5, repeatRows=1, style=tablestyle3,
-                               colWidths=[80, 40, 300, 55, 50], rowHeights=10)
-               
-
-
+                all_data = [[x for x in g] for x, g in groupby(table, key = lambda x: x[5])]
                 Elements = []
-                Elements.append(table3)
+
+                for data in all_data:
+                    table3 = Table(data, style=tablestyle3, hAlign='LEFT',repeatRows=1,colWidths=[80, 40, 300, 55, 50, 100], rowHeights=10)
+                    #table.setStyle(table_style)
+                    Elements.append(table3)
+                    Elements.append(PageBreak())
+
+
+                               
                 doc.build(Elements)
 
                 end_time = time.time()
