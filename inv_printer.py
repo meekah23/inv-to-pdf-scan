@@ -1,4 +1,5 @@
 import sys
+import os
 import pandas as pd
 import sqlite3
 import time
@@ -115,9 +116,14 @@ class VanInvoice(QWidget):
 
     def toPDF(self):
         start_time = time.time()
+        directory = "inv_pdf"
         all_data = [[x for x in g] for x, g in groupby(table, key = lambda x: x[5])]
+        #b = [el[5] for el in table]
+        #print(b)
         filename = 1
         try:
+            os.makedirs(directory, exist_ok = True)
+            print("Directory '%s' created successfully" % directory)
             for data in all_data:
         #filename, _ = QFileDialog.getSaveFileName(self, 'Save file', '', 'PDF File (*.pdf)')
                 
@@ -253,7 +259,9 @@ class VanInvoice(QWidget):
                      addressnote.drawOn(canvas, pdf.leftMargin, 0.7 * inch)
                         
 
-                doc = BaseDocTemplate(str(filename)+'.pdf', leftMargin=0.5 * inch, rightMargin=0.5 * inch)
+                save_name = os.path.join("inv_pdf/", "inv"+ str(filename)+'.pdf')
+                #doc = BaseDocTemplate("inv_pdf/"+str(filename)+'.pdf', leftMargin=0.5 * inch, rightMargin=0.5 * inch)
+                doc = BaseDocTemplate(save_name, leftMargin=0.5 * inch, rightMargin=0.5 * inch)
                 filename+=1
                 frame = Frame(
 
@@ -263,9 +271,7 @@ class VanInvoice(QWidget):
                     4.83 * inch,  # height
                     showBoundary=1
                 )
-                
-                #template = PageTemplate(id='all_pages', frames=frame, onPage=header)
-
+              
                 template = PageTemplate(id='all_pages',frames=frame,onPage=header)
                 doc.addPageTemplates([template])
 
@@ -281,18 +287,9 @@ class VanInvoice(QWidget):
                     ('BOX', (0,0), (-1,-1), 0.45, colors.black),
                     ('INNERGRID', (0, 0), (-1, -1), 0.25, colors.blue),
                 ])
-
-                    #all_data = [[x for x in g] for x, g in groupby(table, key = lambda x: x[5])]
                 Elements = []
-
-                    #for data in all_data:
                 table3 = Table(data, style=tablestyle3, hAlign='LEFT',repeatRows=1,colWidths=[80, 40, 300, 55, 50, 100], rowHeights=10)
-                        #table.setStyle(table_style)
-                Elements.append(table3)
-                    #Elements.append(PageBreak())
-
-
-                               
+                Elements.append(table3)         
                 doc.build(Elements)
 
             end_time = time.time()
