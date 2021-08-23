@@ -115,9 +115,15 @@ class VanInvoice(QWidget):
 
     def toPDF(self):
         start_time = time.time()
-        filename, _ = QFileDialog.getSaveFileName(self, 'Save file', '', 'PDF File (*.pdf)')
-        if filename != '':
-            try:
+        all_data = [[x for x in g] for x, g in groupby(table, key = lambda x: x[5])]
+        filename = 1
+        try:
+            for data in all_data:
+        #filename, _ = QFileDialog.getSaveFileName(self, 'Save file', '', 'PDF File (*.pdf)')
+                
+            
+            #if filename != '':
+                
 
                 style2 = ParagraphStyle(
                     name='Normal',
@@ -181,38 +187,30 @@ class VanInvoice(QWidget):
 
                 def header(canvas, pdf):
                    
-                        # Draw heading
-                        heading = Paragraph("VANCOUVER GLASS (1990) LTD.", style2)
-                        heading.wrap(pdf.width, inch * 0.3)
-                        heading.drawOn(canvas, pdf.leftMargin, pdf.height + inch)
+                    # Draw heading
+                     heading = Paragraph("VANCOUVER GLASS (1990) LTD.", style2)
+                     heading.wrap(pdf.width, inch * 0.3)
+                     heading.drawOn(canvas, pdf.leftMargin, pdf.height + inch)
 
                         # Draw subheading.
-                        subheading = Paragraph("INVOICE", style3)
-                        subheading.wrap(pdf.width, inch * 0.2)
-                        subheading.drawOn(canvas, pdf.leftMargin, pdf.height + inch * 0.5)
+                     subheading = Paragraph("INVOICE", style3)
+                     subheading.wrap(pdf.width, inch * 0.2)
+                     subheading.drawOn(canvas, pdf.leftMargin, pdf.height + inch * 0.5)
                     
                         #table line
-                        canvas.line(1.7 * inch, 2.5 *inch, 1.7 *inch, 7.6 *inch)
-                        canvas.line(2.26 * inch, 2.5 * inch, 2.26 * inch, 7.6 * inch)
-                        canvas.line(6.41 * inch, 2.5 * inch, 6.41 * inch, 7.6 * inch)
-                        canvas.line(7.19 * inch, 2.5 * inch, 7.19 * inch, 7.6 * inch)
+                     canvas.line(1.7 * inch, 2.5 *inch, 1.7 *inch, 7.6 *inch)
+                     canvas.line(2.26 * inch, 2.5 * inch, 2.26 * inch, 7.6 * inch)
+                     canvas.line(6.41 * inch, 2.5 * inch, 6.41 * inch, 7.6 * inch)
+                     canvas.line(7.19 * inch, 2.5 * inch, 7.19 * inch, 7.6 * inch)
 
-                        tablelist1 = [["Date:","Invoice#: "],
+                     tablelist1 = [["Date:","Invoice#: "],
                                   ["Salesman:"],
                                   ["GST#: 121989834RT","Quote#: "],
                                   ["Added-by:","Page: "+"%d " % doc.page]
                                   ] 
-                        """
-                        tabledetails = [] 
-                        for row in range(len(values)):
-                            for col in range(len(values[0])):
-                                table_item = values[row][col]              
-                                tabledetails.append('' if table_item is None else str(table_item))
 
-                        print(tabledetails)"""
-                        
                  
-                        tablelist2 = [["Sold To:", "Location: "],
+                     tablelist2 = [["Sold To:", "Location: "],
                                   ["", "Ship To:"],
                                   ["", ""],
                                   ["", ""],
@@ -221,42 +219,42 @@ class VanInvoice(QWidget):
                                   ["Phone: ", ""],
                                   ["PST Exempt# "]]
 
-                        headerlist = [["Code", "Qty", "Description", "Unit Price", "Amount"]]
+                     headerlist = [["Code", "Qty", "Description", "Unit Price", "Amount"]]
 
-                        footerlist = [["", "Sub-Total:", ""],
+                     footerlist = [["", "Sub-Total:", ""],
                                  ["Overdue accounts will be charged 2% per month.", "GST", ""],
                                  ["Please enclose a copy of the invoice with the cheque."],
                                  [""],
                                  [""],
                                  ["Charge to Acount", "Total Amount:", ""]]
 
-                        table1 = Table(tablelist1, colWidths=[400,200], rowHeights=[10, 10, 10, 10],
+                     table1 = Table(tablelist1, colWidths=[400,200], rowHeights=[10, 10, 10, 10],
                                    hAlign='CENTER', spaceBefore=5, style=tablestyle1)
-                        table1.wrap(pdf.width, inch)
-                        table1.drawOn(canvas, pdf.leftMargin, pdf.height - inch * 0.4)  
+                     table1.wrap(pdf.width, inch)
+                     table1.drawOn(canvas, pdf.leftMargin, pdf.height - inch * 0.4)  
                         
-                        table2 = Table(tablelist2, colWidths=[268, 268], rowHeights=[20, 15, 10, 10, 10, 10, 10, 20],
+                     table2 = Table(tablelist2, colWidths=[268, 268], rowHeights=[20, 15, 10, 10, 10, 10, 10, 20],
                                    hAlign='CENTER', spaceBefore=5, style=tablestyle2)
-                        table2.wrap(pdf.width, inch)
-                        table2.drawOn(canvas, pdf.leftMargin, pdf.height - inch * 2)
+                     table2.wrap(pdf.width, inch)
+                     table2.drawOn(canvas, pdf.leftMargin, pdf.height - inch * 2)
 
-                        header = Table(headerlist,hAlign='LEFT', spaceBefore=5, repeatRows=1, style=headerstyle,
+                     header = Table(headerlist,hAlign='LEFT', spaceBefore=5, repeatRows=1, style=headerstyle,
                                      colWidths=[86, 43, 301, 54, 53])
-                        header.wrap(pdf.width, inch)
-                        header.drawOn(canvas, pdf.leftMargin, pdf.height - inch * 2.35)
-                        footertable = Table(footerlist, colWidths=[410, 71, 56], rowHeights=[20, 10, 10, 10, 10, 20],
+                     header.wrap(pdf.width, inch)
+                     header.drawOn(canvas, pdf.leftMargin, pdf.height - inch * 2.35)
+                     footertable = Table(footerlist, colWidths=[410, 71, 56], rowHeights=[20, 10, 10, 10, 10, 20],
                                         hAlign='LEFT', spaceBefore=5, style=footerstyle)
-                        footertable.wrap(pdf.width, inch)
-                        footertable.drawOn(canvas, pdf.leftMargin, 1.38 * inch)
+                     footertable.wrap(pdf.width, inch)
+                     footertable.drawOn(canvas, pdf.leftMargin, 1.38 * inch)
 
 
-                        addressnote = Paragraph("1706 E. HASTINGS, VAN, B.C. V5L 1S9 Phone (604)253-7707 Fax (604)253-8448",addstyle)
-                        addressnote.wrap(pdf.width, inch)
-                        addressnote.drawOn(canvas, pdf.leftMargin, 0.7 * inch)
+                     addressnote = Paragraph("1706 E. HASTINGS, VAN, B.C. V5L 1S9 Phone (604)253-7707 Fax (604)253-8448",addstyle)
+                     addressnote.wrap(pdf.width, inch)
+                     addressnote.drawOn(canvas, pdf.leftMargin, 0.7 * inch)
                         
 
-                doc = BaseDocTemplate(filename, leftMargin=0.5 * inch, rightMargin=0.5 * inch)
-                
+                doc = BaseDocTemplate(str(filename)+'.pdf', leftMargin=0.5 * inch, rightMargin=0.5 * inch)
+                filename+=1
                 frame = Frame(
 
                     0.5 * inch,  # x
@@ -284,32 +282,30 @@ class VanInvoice(QWidget):
                     ('INNERGRID', (0, 0), (-1, -1), 0.25, colors.blue),
                 ])
 
-                all_data = [[x for x in g] for x, g in groupby(table, key = lambda x: x[5])]
+                    #all_data = [[x for x in g] for x, g in groupby(table, key = lambda x: x[5])]
                 Elements = []
 
-                for data in all_data:
-                    table3 = Table(data, style=tablestyle3, hAlign='LEFT',repeatRows=1,colWidths=[80, 40, 300, 55, 50, 100], rowHeights=10)
-                    #table.setStyle(table_style)
-                    Elements.append(table3)
-                    Elements.append(PageBreak())
+                    #for data in all_data:
+                table3 = Table(data, style=tablestyle3, hAlign='LEFT',repeatRows=1,colWidths=[80, 40, 300, 55, 50, 100], rowHeights=10)
+                        #table.setStyle(table_style)
+                Elements.append(table3)
+                    #Elements.append(PageBreak())
 
 
                                
                 doc.build(Elements)
 
-                end_time = time.time()
-                execution_time = end_time - start_time
-                self.time_label.setText("PDF created for " + str(execution_time) + " secs")
-                QMessageBox.information(self, "Done!", "File Exported.")
-
-            except Exception as e:
-                print(e)
-                QMessageBox.information(self, "Error", "Failed to run script.")
-
+            end_time = time.time()
+            execution_time = end_time - start_time
+            self.time_label.setText("PDF created for " + str(execution_time) + " secs")
+        
+            QMessageBox.information(self, "Done!", "File Exported.")
+        except Exception as e:
+            print(e)
+            QMessageBox.information(self, "Error", "Failed to run script.")
+            
 
 app = QApplication(sys.argv)
 design = VanInvoice()
 
 app.exec_()
-
-
