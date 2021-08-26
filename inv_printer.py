@@ -94,21 +94,27 @@ class VanInvoice(QWidget):
             #print(values)
             #print(sep[358826])
 
+
             self.tableWidget.setRowCount(0)
             for row_number, row_data in enumerate(table):
                 self.tableWidget.insertRow(row_number)
                 for column_number, data in enumerate(row_data):
                     self.tableWidget.setItem(row_number, column_number, QTableWidgetItem(str(data)))
+            
+            if not table:
+                QMessageBox.information(self, "Done!", "No more invoice to print.")
+            else:
+                end_time = time.time()
+                execution_time = end_time - start_time
+                self.time_label.setText("Data fetched for " + str(execution_time) + " secs")
 
             #get total
             
 
-            end_time = time.time()
-            execution_time = end_time - start_time
-            self.time_label.setText("Data fetched for " + str(execution_time) + " secs")
+            
             
 
-            QMessageBox.information(self, "Done!", "Data fetched.")
+            #QMessageBox.information(self, "Done!", "Data fetched.")
 
         except Exception as e:
                 print(e)
@@ -120,7 +126,7 @@ class VanInvoice(QWidget):
         all_data = [[x for x in g] for x, g in groupby(table, key = lambda x: x[5])]
         #b = [el[5] for el in table]
         #print(b)
-        filename = 1
+        filename = time.time()
         try:
             os.makedirs(directory, exist_ok = True)
             print("Directory '%s' created successfully" % directory)
@@ -292,14 +298,31 @@ class VanInvoice(QWidget):
                 Elements.append(table3)         
                 doc.build(Elements)
 
+            # load excel file
+            
+
             end_time = time.time()
             execution_time = end_time - start_time
             self.time_label.setText("PDF created for " + str(execution_time) + " secs")
         
-            QMessageBox.information(self, "Done!", "File Exported.")
+            #QMessageBox.information(self, "Done!", "File Exported.")
         except Exception as e:
             print(e)
             QMessageBox.information(self, "Error", "Failed to run script.")
+        
+        try:
+            conn = sqlite3.connect(':memory:')
+            cur = conn.cursor()
+            df = pd.read_excel("Data/PR_HEAD.xlsx", sheet_name="PR_HEAD")
+            df.to_sql(name='PR_HEAD', con=conn, if_exists='append')
+            df.loc[(df.PR_STATUS.isnull()), 'PR_STATUS'] = 'P'
+            print(df)
+            df.to_excel('Data/PR_HEAD.xlsx',sheet_name = 'PR_HEAD', index=False)
+
+            print('Status updated')
+                
+        except Exception as e:
+                print(e)
             
 
 app = QApplication(sys.argv)
